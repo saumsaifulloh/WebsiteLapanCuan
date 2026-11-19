@@ -1,7 +1,19 @@
 <?php
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
+// Session berbasis cookie (Vercel serverless tidak menyimpan session PHP)
+ob_start();
+$_SESSION = [];
+if (!empty($_COOKIE['lc_sess'])) {
+    $decoded = json_decode(base64_decode($_COOKIE['lc_sess']), true);
+    if (is_array($decoded)) { $_SESSION = $decoded; }
 }
+register_shutdown_function(function () {
+    if (!headers_sent()) {
+        setcookie('lc_sess', base64_encode(json_encode($_SESSION)), [
+            'expires' => time() + 86400, 'path' => '/', 'httponly' => true, 'samesite' => 'Lax'
+        ]);
+    }
+    if (ob_get_level() > 0) { ob_end_flush(); }
+});
 
 // Konfigurasi Informasi Lapan Cuan
 $cafe_info = [
@@ -411,7 +423,7 @@ function getCategoriesWithProducts($conn = null) {
 
 // === HELPER DUMMY JSON (TANPA DATABASE) ===
 function getOrdersFilePath() {
-    $dir = dirname(__DIR__) . '/data';
+    $dir = getenv('VERCEL') ? '/tmp/lapancuan_data' : dirname(__DIR__) . '/data';
     if (!is_dir($dir)) {
         mkdir($dir, 0777, true);
     }
@@ -440,18 +452,39 @@ function getOrdersFilePath() {
     return $file;
 }
 
+function ordersRedisCmd($cmd) {
+    $url = getenv('UPSTASH_REDIS_REST_URL'); $tok = getenv('UPSTASH_REDIS_REST_TOKEN');
+    if (!$url || !$tok) { return null; }
+    $ch = curl_init($url);
+    curl_setopt_array($ch, [CURLOPT_RETURNTRANSFER => true, CURLOPT_POST => true,
+        CURLOPT_HTTPHEADER => ["Authorization: Bearer $tok", 'Content-Type: application/json'],
+        CURLOPT_POSTFIELDS => json_encode($cmd), CURLOPT_TIMEOUT => 8]);
+    $res = json_decode(curl_exec($ch), true); curl_close($ch);
+    return $res['result'] ?? null;
+}
+
 function getDummyOrders() {
-    $file = getOrdersFilePath();
-    $data = json_decode(file_get_contents($file), true);
+    if (getenv('UPSTASH_REDIS_REST_URL')) {
+        $raw = ordersRedisCmd(['GET', 'lapancuan_orders']);
+        $data = $raw ? json_decode($raw, true) : null;
+        if (!is_array($data)) { $data = json_decode(file_get_contents(getOrdersFilePath()), true); }
+        return is_array($data) ? $data : [];
+    }
+    $data = json_decode(file_get_contents(getOrdersFilePath()), true);
     return is_array($data) ? $data : [];
 }
 
+function writeOrders($orders) {
+    if (getenv('UPSTASH_REDIS_REST_URL')) {
+        ordersRedisCmd(['SET', 'lapancuan_orders', json_encode($orders)]);
+        return;
+    }
+    file_put_contents(getOrdersFilePath(), json_encode($orders, JSON_PRETTY_PRINT));
+}
+
 function getDummyOrderByCode($code) {
-    $orders = getDummyOrders();
-    foreach ($orders as $ord) {
-        if ($ord['code'] === $code) {
-            return $ord;
-        }
+    foreach (getDummyOrders() as $ord) {
+        if ($ord['code'] === $code) { return $ord; }
     }
     return null;
 }
@@ -459,17 +492,14 @@ function getDummyOrderByCode($code) {
 function saveDummyOrder($newOrder) {
     $orders = getDummyOrders();
     array_unshift($orders, $newOrder);
-    file_put_contents(getOrdersFilePath(), json_encode($orders, JSON_PRETTY_PRINT));
+    writeOrders($orders);
 }
 
 function updateDummyOrderStatus($code, $newStatus) {
     $orders = getDummyOrders();
     foreach ($orders as &$ord) {
-        if ($ord['code'] === $code) {
-            $ord['status'] = $newStatus;
-            break;
-        }
+        if ($ord['code'] === $code) { $ord['status'] = $newStatus; break; }
     }
-    file_put_contents(getOrdersFilePath(), json_encode($orders, JSON_PRETTY_PRINT));
+    writeOrders($orders);
 }
 ?>
