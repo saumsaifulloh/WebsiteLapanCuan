@@ -28,9 +28,9 @@ function cleanInput($conn, $data) {
 function getDummyCatalog() {
     return [
         [
-          'id' => 1,
+            'id' => 1,
             'name' => 'Coffee Series',
-            'slug' => 'Coffee Series',
+            'slug' => 'coffee',
             'eyebrow' => 'ARTISAN ROASTERY',
             'subtitle' => 'Fondasi espresso berkarakter khas dari biji kopi terpilih, diekstraksi sempurna menghasilkan crema pekat dan aroma memikat.',
             'products' => [
@@ -74,10 +74,10 @@ function getDummyCatalog() {
                     'badge_right' => '',
                     'is_favorite' => 0
                 ],
-               [
+                [
                     'id' => 105,
                     'name' => 'Kopi Cuan',
-                    'description' => 'Signature kopi susu gula aren autentik Lapan Cuan dengan rasa gurih legit yang.',
+                    'description' => 'Signature kopi susu gula aren autentik Lapan Cuan dengan rasa gurih legit yang khas.',
                     'price' => 25000,
                     'image_url' => 'assets/img menu/Coffee/Kopi Cuan.png',
                     'badge_left' => 'SIGNATURE',
@@ -87,7 +87,7 @@ function getDummyCatalog() {
                 [
                     'id' => 106,
                     'name' => 'Yin Yang',
-                    'description' => 'Perpaduan unik kopi espresso aromatik dengan racikan teh pekat dan sentuhan.',
+                    'description' => 'Perpaduan unik kopi espresso aromatik dengan racikan teh pekat dan sentuhan creamy.',
                     'price' => 25000,
                     'image_url' => 'assets/img menu/Coffee/Yinyang.png',
                     'badge_left' => 'SIGNATURE',
@@ -106,7 +106,7 @@ function getDummyCatalog() {
                 [
                     'id' => 201,
                     'name' => 'Chocolate',
-                    'description' => 'Cokelat artisan pekat kaya rasa dipadukan dengan susu segar hangat atau dingin yang.',
+                    'description' => 'Cokelat artisan pekat kaya rasa dipadukan dengan susu segar hangat atau dingin.',
                     'price' => 22000,
                     'image_url' => 'assets/img menu/Non Coffee/Chocolate.png',
                     'badge_left' => 'NON-COFFEE',
@@ -126,7 +126,7 @@ function getDummyCatalog() {
                 [
                     'id' => 203,
                     'name' => 'Black Velvet',
-                    'description' => 'Minuman unik berbahan dasar black cocoa premium dan activated charcoal berpadu.',
+                    'description' => 'Minuman unik berbahan dasar black cocoa premium dan activated charcoal berpadu susu.',
                     'price' => 22000,
                     'image_url' => 'assets/img menu/Non Coffee/Black Velvet.png',
                     'badge_left' => 'NON-COFFEE',
@@ -136,7 +136,7 @@ function getDummyCatalog() {
                 [
                     'id' => 204,
                     'name' => 'Milk Tea',
-                    'description' => 'Seduhan daun teh hitam pilihan beraroma wangi berpadu racikan susu gurih manis yang.',
+                    'description' => 'Seduhan daun teh hitam pilihan beraroma wangi berpadu racikan susu gurih manis.',
                     'price' => 22000,
                     'image_url' => 'assets/img menu/Non Coffee/Milk Tea.png',
                     'badge_left' => 'NON-COFFEE',
@@ -156,7 +156,7 @@ function getDummyCatalog() {
                 [
                     'id' => 206,
                     'name' => 'Milky Sugus Mango',
-                    'description' => 'Racikan susu lembut dengan sensasi permen manis-segar buah mangga tropis yang.',
+                    'description' => 'Racikan susu lembut dengan sensasi permen manis-segar buah mangga tropis.',
                     'price' => 22000,
                     'image_url' => 'assets/img menu/Non Coffee/Milky Sugus Mango.png',
                     'badge_left' => 'NON-COFFEE',
@@ -179,7 +179,7 @@ function getDummyCatalog() {
             'id' => 3,
             'name' => 'Refreshment Series',
             'eyebrow' => 'SPARKLING & TROPICAL',
-            'slug' => 'Refreshment Series',
+            'slug' => 'refreshment',
             'subtitle' => 'Perpaduan soda segar dan buah tropis.',
             'products' => [
                 [
@@ -215,7 +215,7 @@ function getDummyCatalog() {
                 [
                     'id' => 304,
                     'name' => 'Nailong',
-                    'description' => 'Kreasi minuman dingin berbasis buah tropis segar, soda berkarbonasi, dan.',
+                    'description' => 'Kreasi minuman dingin berbasis buah tropis segar dan soda berkarbonasi.',
                     'price' => 23000,
                     'image_url' => 'assets/img menu/Refreshment/Nailong.png',
                     'badge_left' => 'MOCKTAIL',
@@ -224,129 +224,128 @@ function getDummyCatalog() {
                 ],
             ]
         ],
-         [
+        [
             'id' => 4,
             'name' => 'Manual Brew Series',
             'eyebrow' => 'AUTENTIK & TRADISIONAL',
-            'slug' => 'Manual Brew Series',
-            'subtitle' => 'Perpaduan soda segar dan buah tropis.',
+            'slug' => 'manual-brew',
+            'subtitle' => 'Seduhan manual autentik dari biji kopi pilihan Nusantara.',
             'products' => [
                 [
-                    'id' => 301,
+                    'id' => 401,
                     'name' => 'Tubruk Hitam',
-                    'description' => 'Sparkling citrus dengan perpaduan sirup bunga telang, peach, dan daun mint segar.',
+                    'description' => 'Kopi hitam seduh tradisional dengan aroma kuat dan karakter rasa otentik.',
                     'price' => 23000,
                     'image_url' => 'assets/img menu/Manual Brew/Tubruk Hitam.png',
-                    'badge_left' => 'MOCKTAIL',
+                    'badge_left' => 'MANUAL BREW',
                     'badge_right' => '',
                     'is_favorite' => 0
                 ],
                 [
-                    'id' => 302,
+                    'id' => 402,
                     'name' => 'Tubruk Susu',
-                    'description' => 'Kesegaran air tonik dan perasan jeruk sunkist dengan ekstra shot espresso.',
+                    'description' => 'Kopi tubruk pekat berpadu susu kental manis yang hangat dan nikmat.',
                     'price' => 24000,
                     'image_url' => 'assets/img menu/Manual Brew/Tubruk Susu.png',
-                    'badge_left' => 'SPARKLER',
+                    'badge_left' => 'MANUAL BREW',
                     'badge_right' => '',
                     'is_favorite' => 0
                 ],
                 [
-                    'id' => 303,
+                    'id' => 403,
                     'name' => 'Filter Coffee V60',
-                    'description' => 'Kesegaran air tonik dan perasan jeruk sunkist dengan ekstra shot espresso.',
+                    'description' => 'Seduhan pour-over V60 yang bersih dengan profil aroma floral dan fruity.',
                     'price' => 24000,
                     'image_url' => 'assets/img menu/Manual Brew/Filter Coffe V60.png',
-                    'badge_left' => 'SPARKLER',
+                    'badge_left' => 'POUR OVER',
                     'badge_right' => '',
                     'is_favorite' => 0
                 ],
             ]
         ],
-         [
+        [
             'id' => 5,
             'name' => 'Tea Series',
             'eyebrow' => 'BOTANICAL & REFRESHING',
-            'slug' => 'Tea Series',
-            'subtitle' => 'Perpaduan soda segar dan buah tropis.',
+            'slug' => 'tea',
+            'subtitle' => 'Seduhan teh pilihan dengan kesegaran alami.',
             'products' => [
                 [
-                    'id' => 301,
+                    'id' => 501,
                     'name' => 'Black Tea',
-                    'description' => 'Sparkling citrus dengan perpaduan sirup bunga telang, peach, dan daun mint segar.',
+                    'description' => 'Seduhan teh hitam klasik yang harum, ringan, dan menyegarkan.',
                     'price' => 23000,
                     'image_url' => 'assets/img menu/Tea Series/Black Tea.png',
-                    'badge_left' => 'MOCKTAIL',
+                    'badge_left' => 'TEA',
                     'badge_right' => '',
                     'is_favorite' => 0
                 ],
                 [
-                    'id' => 302,
+                    'id' => 502,
                     'name' => 'Lemon Tea',
-                    'description' => 'Kesegaran air tonik dan perasan jeruk sunkist dengan ekstra shot espresso.',
+                    'description' => 'Perpaduan teh hitam segar dengan perasan lemon asam manis yang menyegarkan.',
                     'price' => 24000,
                     'image_url' => 'assets/img menu/Tea Series/Lemon Tea.png',
-                    'badge_left' => 'SPARKLER',
+                    'badge_left' => 'TEA',
                     'badge_right' => '',
                     'is_favorite' => 0
                 ],
                 [
-                    'id' => 303,
+                    'id' => 503,
                     'name' => 'Manggo Tea',
-                    'description' => 'Kesegaran air tonik dan perasan jeruk sunkist dengan ekstra shot espresso.',
+                    'description' => 'Teh dingin aromatik dengan sentuhan manis buah mangga tropis.',
                     'price' => 24000,
                     'image_url' => 'assets/img menu/Tea Series/Mango Tea.png',
-                    'badge_left' => 'SPARKLER',
+                    'badge_left' => 'TEA',
                     'badge_right' => '',
                     'is_favorite' => 0
                 ],
                 [
-                    'id' => 304,
+                    'id' => 504,
                     'name' => 'Peach Tea',
-                    'description' => 'Kesegaran air tonik dan perasan jeruk sunkist dengan ekstra shot espresso.',
+                    'description' => 'Teh dingin harum berpadu manis lembut buah peach segar.',
                     'price' => 24000,
                     'image_url' => 'assets/img menu/Tea Series/Peach Tea.png',
-                    'badge_left' => 'SPARKLER',
+                    'badge_left' => 'TEA',
                     'badge_right' => '',
                     'is_favorite' => 0
                 ],
             ]
-            
         ],
         [
             'id' => 6,
             'name' => 'Add-On Series',
             'eyebrow' => 'ADD-ON & CUSTOMIZATION',
-            'slug' => 'Add-On Series',
-            'subtitle' => 'Perpaduan soda segar dan buah tropis.',
+            'slug' => 'add-on',
+            'subtitle' => 'Tambahan ekstra untuk menyempurnakan minuman favoritmu.',
             'products' => [
                 [
-                    'id' => 301,
+                    'id' => 601,
                     'name' => 'Air Mineral',
-                    'description' => 'Sparkling citrus dengan perpaduan sirup bunga telang, peach, dan daun mint segar.',
+                    'description' => 'Air mineral dingin dan segar sebagai pendamping kopi.',
                     'price' => 23000,
                     'image_url' => 'assets/img menu/Add-On Series/Mineral Water.png',
-                    'badge_left' => 'MOCKTAIL',
+                    'badge_left' => 'ADD-ON',
                     'badge_right' => '',
                     'is_favorite' => 0
                 ],
                 [
-                    'id' => 302,
+                    'id' => 602,
                     'name' => 'Espresso Shot',
-                    'description' => 'Kesegaran air tonik dan perasan jeruk sunkist dengan ekstra shot espresso.',
+                    'description' => 'Tambahan ekstra shot espresso untuk rasa kopi yang lebih bold.',
                     'price' => 24000,
                     'image_url' => 'assets/img menu/Add-On Series/Espresso Shot.png',
-                    'badge_left' => 'SPARKLER',
+                    'badge_left' => 'ADD-ON',
                     'badge_right' => '',
                     'is_favorite' => 0
                 ],
                 [
-                    'id' => 303,
+                    'id' => 603,
                     'name' => 'Oat Milk',
-                    'description' => 'Sparkling citrus dengan perpaduan sirup bunga telang, peach, dan daun mint segar.',
+                    'description' => 'Opsi pengganti susu nabati oat milk yang creamy dan ramah dairy.',
                     'price' => 23000,
                     'image_url' => 'assets/img menu/Add-On Series/Oat Milk.png',
-                    'badge_left' => 'MOCKTAIL',
+                    'badge_left' => 'ADD-ON',
                     'badge_right' => '',
                     'is_favorite' => 0
                 ],
@@ -372,7 +371,7 @@ function getDummyCatalog() {
                 [
                     'id' => 702,
                     'name' => 'Hokkaido Bun Cheese',
-                    'description' => 'Pastry berlapis renyah di luar dan lembut bermentega di bagian dalam.',
+                    'description' => 'Pastry berlapis renyah di luar dan lembut bermentega dengan isian keju gurih.',
                     'price' => 20000,
                     'image_url' => 'assets/img menu/Pastry/Hokkaido-Bun Cheese.png',
                     'badge_left' => 'PASTRY',
@@ -382,7 +381,7 @@ function getDummyCatalog() {
                 [
                     'id' => 703,
                     'name' => 'Hokkaido Bun Buttermilk',
-                    'description' => 'Roti bun empuk bergaya Hokkaido dengan kerak kopi harum dan lelehan isian mentega hangat.',
+                    'description' => 'Roti bun empuk bergaya Hokkaido dengan aroma buttermilk lembut dan hangat.',
                     'price' => 18000,
                     'image_url' => 'assets/img menu/Pastry/Hokkaido-Bun Buttermilk.png',
                     'badge_left' => 'PASTRY',
@@ -408,5 +407,69 @@ function getFavoriteProducts($conn = null, $limit = 4) {
 
 function getCategoriesWithProducts($conn = null) {
     return getDummyCatalog();
+}
+
+// === HELPER DUMMY JSON (TANPA DATABASE) ===
+function getOrdersFilePath() {
+    $dir = dirname(__DIR__) . '/data';
+    if (!is_dir($dir)) {
+        mkdir($dir, 0777, true);
+    }
+    $file = $dir . '/orders.json';
+    if (!file_exists($file)) {
+        $initial = [
+            [
+                'code'           => 'LC-' . date('ymd') . '-101',
+                'name'           => 'Raka Pratama',
+                'phone'          => '08123456789',
+                'table'          => 'Meja 2',
+                'notes'          => 'Less sugar',
+                'payment_method' => 'QRIS',
+                'payment_status' => 'LUNAS',
+                'status'         => 'preparing', // preparing | ready | completed
+                'created_at'     => date('H:i'),
+                'total'          => 43000,
+                'items'          => [
+                    ['name' => 'Kopi Cuan', 'qty' => 1, 'price' => 25000],
+                    ['name' => 'Hokkaido Bun Coffee', 'qty' => 1, 'price' => 18000],
+                ]
+            ]
+        ];
+        file_put_contents($file, json_encode($initial, JSON_PRETTY_PRINT));
+    }
+    return $file;
+}
+
+function getDummyOrders() {
+    $file = getOrdersFilePath();
+    $data = json_decode(file_get_contents($file), true);
+    return is_array($data) ? $data : [];
+}
+
+function getDummyOrderByCode($code) {
+    $orders = getDummyOrders();
+    foreach ($orders as $ord) {
+        if ($ord['code'] === $code) {
+            return $ord;
+        }
+    }
+    return null;
+}
+
+function saveDummyOrder($newOrder) {
+    $orders = getDummyOrders();
+    array_unshift($orders, $newOrder);
+    file_put_contents(getOrdersFilePath(), json_encode($orders, JSON_PRETTY_PRINT));
+}
+
+function updateDummyOrderStatus($code, $newStatus) {
+    $orders = getDummyOrders();
+    foreach ($orders as &$ord) {
+        if ($ord['code'] === $code) {
+            $ord['status'] = $newStatus;
+            break;
+        }
+    }
+    file_put_contents(getOrdersFilePath(), json_encode($orders, JSON_PRETTY_PRINT));
 }
 ?>

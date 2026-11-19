@@ -3,74 +3,93 @@ require_once 'includes/koneksi.php';
 require_once 'includes/helpers.php';
 
 $page = isset($_GET['page']) ? $_GET['page'] : 'gate';
-$order_success = null;
-$order_error   = null;
+$order_error = null;
 
-// SIMULASI PROSES ORDER UNTUK PROTOTYPE (TANPA DATABASE)
+// Reset mode meja (berguna saat demo/testing di laptop yang sama)
+if (isset($_GET['reset_meja'])) {
+    unset($_SESSION['scanned_table'], $_SESSION['order_type']);
+    header("Location: index.php?page=menu");
+    exit;
+}
+
+// Deteksi nomor meja dari hasil scan QR (?meja=1, ?meja=2, dst.)
+if (isset($_GET['meja']) && $_GET['meja'] !== '') {
+    $_SESSION['scanned_table'] = 'Meja ' . preg_replace('/[^0-9A-Za-z]/', '', $_GET['meja']);
+    if (empty($_SESSION['order_type'])) {
+        $_SESSION['order_type'] = 'dine_in';
+    }
+}
+
+// Ganti tipe layanan antara Dine-In (Meja X) atau Takeaway dari hasil scan QR
+if (isset($_GET['tipe']) && in_array($_GET['tipe'], ['dine_in', 'takeaway'], true) && !empty($_SESSION['scanned_table'])) {
+    $_SESSION['order_type'] = $_GET['tipe'];
+    header("Location: index.php?page=menu");
+    exit;
+}
+
+$scanned_table = $_SESSION['scanned_table'] ?? '';
+$order_type    = $_SESSION['order_type'] ?? 'dine_in';
+$can_self_order = !empty($scanned_table);
+
+// Label lokasi pesanan (Dine-In di Meja X atau Takeaway dari QR Meja X)
+$active_service_label = '';
+if ($can_self_order) {
+    $active_service_label = ($order_type === 'takeaway')
+        ? 'Takeaway (QR ' . $scanned_table . ')'
+        : $scanned_table . ' (Dine-In)';
+}
+
+// SIMULASI PROSES ORDER + PEMBAYARAN QRIS (DISIMPAN KE JSON DUMMY TANPA DATABASE)
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'place_order') {
-    $customer_name  = cleanInput($conn, $_POST['customer_name'] ?? '');
-    $customer_phone = cleanInput($conn, $_POST['customer_phone'] ?? '');
-    $table_number   = cleanInput($conn, $_POST['table_number'] ?? 'Takeaway');
-    $notes          = cleanInput($conn, $_POST['notes'] ?? '');
-    $cart_json      = $_POST['cart_json'] ?? '[]';
-    $cart_items     = json_decode($cart_json, true);
-
-    if (!empty($customer_name) && !empty($customer_phone) && is_array($cart_items) && count($cart_items) > 0) {
-        $total_amount = 0;
-        foreach ($cart_items as $item) {
-            $price = (float)($item['price'] ?? 0);
-            $qty   = (int)($item['qty'] ?? 0);
-            $total_amount += ($price * $qty);
-        }
-
-        $order_code = 'LC-' . date('ymd') . '-' . rand(100, 999);
-
-        // Simpan ke Session PHP sementara untuk kebutuhan Prototype
-        $_SESSION['prototype_orders'][] = [
-            'code'  => $order_code,
-            'name'  => $customer_name,
-            'phone' => $customer_phone,
-            'table' => $table_number,
-            'notes' => $notes,
-            'total' => $total_amount,
-            'items' => $cart_items
-        ];
-
-        $order_success = [
-            'code'  => $order_code,
-            'name'  => $customer_name,
-            'table' => $table_number,
-            'total' => $total_amount
-        ];
+    if (!$can_self_order) {
+        $order_error = "Pemesanan mandiri hanya tersedia melalui scan QR di meja. Untuk takeaway langsung, silakan ke kasir.";
     } else {
-        $order_error = "Mohon lengkapi nama, nomor WhatsApp, dan pastikan keranjang tidak kosong.";
+        $customer_name  = cleanInput($conn, $_POST['customer_name'] ?? '');
+        $customer_phone = cleanInput($conn, $_POST['customer_phone'] ?? '08123456789');
+        $selected_type  = (($_POST['order_type'] ?? $order_type) === 'takeaway') ? 'takeaway' : 'dine_in';
+        $table_number   = ($selected_type === 'takeaway')
+            ? 'Takeaway (QR ' . $scanned_table . ')'
+            : $scanned_table;
+        $notes          = cleanInput($conn, $_POST['notes'] ?? '');
+        $cart_json      = $_POST['cart_json'] ?? '[]';
+        $cart_items     = json_decode($cart_json, true);
+
+        if (!empty($customer_name) && is_array($cart_items) && count($cart_items) > 0) {
+            $total_amount = 0;
+            foreach ($cart_items as $item) {
+                $price = (float)($item['price'] ?? 0);
+                $qty   = (int)($item['qty'] ?? 0);
+                $total_amount += ($price * $qty);
+            }
+
+            $order_code = 'LC-' . date('ymd') . '-' . rand(100, 999);
+
+            if (function_exists('saveDummyOrder')) {
+                saveDummyOrder([
+                    'code'           => $order_code,
+                    'name'           => $customer_name,
+                    'phone'          => $customer_phone,
+                    'table'          => $table_number,
+                    'notes'          => $notes,
+                    'payment_method' => 'QRIS',
+                    'payment_status' => 'LUNAS',
+                    'status'         => 'preparing',
+                    'created_at'     => date('H:i'),
+                    'total'          => $total_amount,
+                    'items'          => $cart_items
+                ]);
+            }
+
+            header("Location: status-pesanan.php?code=" . urlencode($order_code) . "&new=1");
+            exit;
+        } else {
+            $order_error = "Mohon lengkapi nama pemesan dan pastikan keranjang tidak kosong.";
+        }
     }
 }
 
 include 'includes/header.php';
 ?>
-
-<!-- Notifikasi Simulasi Order Berhasil -->
-<?php if ($order_success): ?>
-<div class="container" style="margin-top: 20px;">
-    <div class="order-alert-success">
-        <div>
-            <span class="badge-pill-green">✓ PESANAN PROTOTYPE DITERIMA</span>
-            <h4>Terima kasih, <?= htmlspecialchars($order_success['name']) ?>!</h4>
-            <p>
-                Kode Pesanan: <strong><?= $order_success['code'] ?></strong> •
-                Lokasi: <strong><?= htmlspecialchars($order_success['table']) ?></strong> •
-                Total: <strong><?= formatRupiah($order_success['total']) ?></strong>
-            </p>
-            <small>Simulasi order berhasil! Data disimpan di sesi prototype tanpa memerlukan database.</small>
-        </div>
-        <button onclick="this.parentElement.remove()" class="btn-outline-sm">Tutup</button>
-    </div>
-</div>
-<script>
-    localStorage.removeItem('lapancuan_cart');
-</script>
-<?php endif; ?>
 
 <?php if ($order_error): ?>
 <div class="container" style="margin-top: 20px;">
@@ -80,9 +99,29 @@ include 'includes/header.php';
 </div>
 <?php endif; ?>
 
+<?php if ($can_self_order && $page === 'menu'): ?>
+<div class="container" style="margin-top: 16px;">
+    <div style="background: #FDF3E7; border: 1px solid #D9B382; color: #3D1C1A; padding: 14px 18px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+        <div>
+            <strong>📍 Scan Terdeteksi: <?= htmlspecialchars($scanned_table) ?> • Mode Aktif: <?= htmlspecialchars($active_service_label) ?></strong>
+            <div style="font-size: 13px; color: #6B5B55; margin-top: 4px;">
+                Pilih layanan:
+                <a href="index.php?tipe=dine_in" style="font-weight: <?= $order_type === 'dine_in' ? '700' : '400' ?>; color: #3D1C1A; text-decoration: <?= $order_type === 'dine_in' ? 'underline' : 'none' ?>;">🍽️ Dine-In (<?= htmlspecialchars($scanned_table) ?>)</a>
+                &nbsp;|&nbsp;
+                <a href="index.php?tipe=takeaway" style="font-weight: <?= $order_type === 'takeaway' ? '700' : '400' ?>; color: #3D1C1A; text-decoration: <?= $order_type === 'takeaway' ? 'underline' : 'none' ?>;">🛍️ Takeaway</a>
+            </div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <span class="badge-pill-green">QRIS Ready</span>
+            <a href="index.php?reset_meja=1" style="font-size: 12px; color: #8C6D62; text-decoration: underline;">Keluar Mode Scan</a>
+        </div>
+    </div>
+</div>
+<?php endif; ?>
+
 <?php
 // =========================================================================
-// 1. HALAMAN LANDING GATE (Sesuai Gambar 1)[cite: 1]
+// 1. HALAMAN LANDING GATE
 // =========================================================================
 if ($page === 'gate'):
 ?>
@@ -119,7 +158,7 @@ if ($page === 'gate'):
 
 <?php
 // =========================================================================
-// 2. HALAMAN HOME (Sesuai Gambar 5)[cite: 5]
+// 2. HALAMAN HOME
 // =========================================================================
 elseif ($page === 'home'):
     $favorites = getFavoriteProducts();
@@ -261,13 +300,12 @@ elseif ($page === 'home'):
 
 <?php
 // =========================================================================
-// 3. HALAMAN MENU & ORDER (Sesuai Gambar 3)[cite: 3]
+// 3. HALAMAN MENU & ORDER
 // =========================================================================
 elseif ($page === 'menu'):
     $categories = getCategoriesWithProducts();
 ?>
 <main class="menu-main container">
-    <!-- Header Katalog Menu Sesuai Desain Figma -->
     <section class="menu-hero" style="padding: 32px 0 20px;">
         <div style="font-size: 12px; letter-spacing: 0.14em; color: var(--text-muted); text-transform: uppercase; margin-bottom: 16px; font-weight: 500;">
             KATALOG MENU • CURATED SIPS
@@ -279,22 +317,21 @@ elseif ($page === 'menu'):
                     Find Your Favorite
                 </h1>
                 <p class="section-subtitle" style="font-size: 14px; line-height: 1.6; color: var(--text-muted);">
-                    Pilih minuman dan pastry favoritmu untuk menemani setiap momen. Diseduh dengan presisi biji kopi kurasi dan bahan-bahan segar berkualitas tinggi.
+                    Jelajahi katalog minuman dan pastry favoritmu di Lapan Cuan. Diseduh dengan presisi biji kopi kurasi dan bahan-bahan segar berkualitas tinggi.
                 </p>
             </div>
 
             <div style="text-align: left; min-width: 300px;">
                 <div style="display: inline-block; font-size: 13px; font-weight: 500; color: var(--text-main); padding-bottom: 8px; margin-bottom: 8px; border-bottom: 1px solid var(--border-soft);">
-                    Bar Espresso Aktif • Sedia Dine-in & Takeaway
+                    <?= $can_self_order ? 'Self-Order Aktif • ' . htmlspecialchars($active_service_label) : 'Katalog Menu • Scan QR Meja untuk Self-Order' ?>
                 </div>
                 <div style="font-size: 12px; letter-spacing: 0.06em; color: var(--text-muted); text-transform: uppercase; line-height: 1.5;">
-                    PEMESANAN DI KASIR • JL. TERUSAN SUDIMORO NO.3<br>MALANG
+                    TAKEAWAY LANGSUNG KE KASIR • JL. TERUSAN SUDIMORO NO.3<br>MALANG
                 </div>
             </div>
         </div>
 
-        <!-- Filter Tab Kategori (All Menu, Coffee (6), Non Coffee (7), dst) -->
-       <div class="category-tabs" style="display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 14px 0; border-top: 1px solid var(--border-soft); border-bottom: 1px solid var(--border-soft); overflow-x: visible; flex-wrap: wrap;">
+        <div class="category-tabs" style="display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 14px 0; border-top: 1px solid var(--border-soft); border-bottom: 1px solid var(--border-soft); overflow-x: visible; flex-wrap: wrap;">
             <button type="button" class="cat-tab active" onclick="filterCategory('all', this)">All Menu</button>
             <?php foreach ($categories as $cat): 
                 $count_label = isset($cat['count_display']) ? $cat['count_display'] : count($cat['products']);
@@ -309,7 +346,6 @@ elseif ($page === 'menu'):
         </div>
     </section>
 
-    <!-- Daftar Kategori & Item Menu -->
     <?php foreach ($categories as $index => $cat): ?>
     <section class="menu-category-block" id="cat-<?= htmlspecialchars($cat['slug']) ?>" style="padding-top: 28px;">
         <div class="cat-block-header" style="display: flex; justify-content: space-between; align-items: flex-start; gap: 24px; margin-bottom: 28px;">
@@ -351,10 +387,12 @@ elseif ($page === 'menu'):
                                 onclick='showProductDetail(<?= json_encode($prod) ?>)'>
                                 Detail
                             </button>
-                            <button type="button" class="btn-order-sm"
-                                onclick='addToCart(<?= (int)$prod["id"] ?>, <?= json_encode($prod["name"]) ?>, <?= (float)$prod["price"] ?>)'>
-                                + Order
-                            </button>
+                            <?php if ($can_self_order): ?>
+                                <button type="button" class="btn-order-sm"
+                                    onclick='addToCart(<?= (int)$prod["id"] ?>, <?= json_encode($prod["name"]) ?>, <?= (float)$prod["price"] ?>)'>
+                                    + Order
+                                </button>
+                            <?php endif; ?>
                         </div>
                     </div>
                 </div>
@@ -365,17 +403,25 @@ elseif ($page === 'menu'):
     <?php endforeach; ?>
 
     <section class="menu-bottom-note">
-        <div>
-            <h4>ℹ️ Informasi Alergen & Kustomisasi Minuman</h4>
-            <p>Beritahu barista kami atau tulis di catatan order jika Anda memiliki alergi terhadap produk susu (dairy), kacang, atau gluten. Tersedia opsi Oat Milk dan pengaturan tingkat kemanisan (Normal / Less Sugar).</p>
-        </div>
-        <button type="button" class="btn-maroon" onclick="toggleCartModal()">Lihat Keranjang Order →</button>
+        <?php if ($can_self_order): ?>
+            <div>
+                <h4>ℹ️ Informasi Alergen &amp; Kustomisasi Minuman</h4>
+                <p>Beritahu barista kami atau tulis di catatan order jika Anda memiliki alergi terhadap produk susu (dairy), kacang, atau gluten. Tersedia opsi Oat Milk dan pengaturan tingkat kemanisan (Normal / Less Sugar).</p>
+            </div>
+            <button type="button" class="btn-maroon" onclick="toggleCartModal()">Bayar QRIS &amp; Checkout →</button>
+        <?php else: ?>
+            <div>
+                <h4>📱 Ingin Memesan dari Meja atau Takeaway?</h4>
+                <p>Scan QR Code yang tersedia di meja untuk pesan mandiri &amp; bayar QRIS (bisa pilih Dine-In atau Takeaway), atau langsung lakukan pemesanan takeaway di kasir.</p>
+            </div>
+            <a href="?page=location" class="btn-maroon">Lihat Lokasi Kasir →</a>
+        <?php endif; ?>
     </section>
 </main>
 
 <?php
 // =========================================================================
-// 4. HALAMAN ABOUT US (Sesuai Gambar 4)[cite: 4]
+// 4. HALAMAN ABOUT US
 // =========================================================================
 elseif ($page === 'about'):
 ?>
@@ -493,7 +539,7 @@ elseif ($page === 'about'):
 
 <?php
 // =========================================================================
-// 5. HALAMAN LOCATION (Sesuai Gambar 2)[cite: 2]
+// 5. HALAMAN LOCATION
 // =========================================================================
 elseif ($page === 'location'):
 ?>
@@ -655,5 +701,119 @@ elseif ($page === 'location'):
     </section>
 </main>
 <?php endif; ?>
+
+<!-- MODAL PEMBAYARAN QRIS -->
+<div id="qrisPaymentModal" style="display:none; position:fixed; inset:0; background:rgba(20,14,12,0.72); z-index:9999; align-items:center; justify-content:center; padding:16px;">
+    <div style="background:#FFF; border-radius:18px; max-width:400px; width:100%; padding:24px; text-align:center; box-shadow:0 16px 40px rgba(0,0,0,0.25);">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+            <span style="font-weight:700; font-size:13px; letter-spacing:0.08em; color:#3D1C1A;">PEMBAYARAN QRIS</span>
+            <button type="button" onclick="closeQrisModal()" style="background:none; border:none; font-size:20px; cursor:pointer;">&times;</button>
+        </div>
+
+        <div style="background:#FAF7F5; border:1px solid #EDE4DF; border-radius:12px; padding:14px; margin-bottom:14px;">
+            <div style="font-size:12px; color:#6B5B55;">Total Pembayaran (<span id="qrisTableLabel">Meja</span>)</div>
+            <div id="qrisTotalAmount" style="font-size:24px; font-weight:700; color:#3D1C1A; margin-top:4px;">Rp 0</div>
+        </div>
+
+        <p style="font-size:13px; color:#6B5B55; margin-bottom:12px;">
+            Scan QRIS di bawah ini menggunakan GoPay, OVO, DANA, ShopeePay, atau Mobile Banking:
+        </p>
+
+        <img id="qrisCodeImg" src="" alt="QRIS Lapan Cuan" style="width:200px; height:200px; margin:0 auto 12px; border:1px solid #DDD; padding:8px; border-radius:12px;">
+
+        <div style="font-size:12px; color:#1E6B38; background:#E7F6EC; padding:8px 12px; border-radius:8px; margin-bottom:16px;">
+            NMID: ID102026888999 • LAPAN CUAN COFFEE
+        </div>
+
+        <button type="button" id="confirmQrisBtn" class="btn-maroon" style="width:100%; padding:13px; font-size:14px;">
+            ✓ Konfirmasi Sudah Bayar &amp; Kirim Pesanan
+        </button>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const scannedTable = <?= json_encode($scanned_table) ?>;
+    const orderType    = <?= json_encode($order_type) ?>;
+    const orderForm    = document.querySelector('form input[name="action"][value="place_order"]')?.closest('form');
+
+    if (orderForm && scannedTable) {
+        let typeSelect = orderForm.querySelector('select[name="order_type"]');
+        const tableInput = orderForm.querySelector('[name="table_number"]');
+
+        if (!typeSelect) {
+            typeSelect = document.createElement('select');
+            typeSelect.name = 'order_type';
+            typeSelect.style.cssText = 'width:100%; padding:10px; border:1px solid #D6C7C1; border-radius:8px; margin-bottom:10px; background:#FFF;';
+            typeSelect.innerHTML = `
+                <option value="dine_in">Dine-In (${scannedTable})</option>
+                <option value="takeaway">Takeaway (Bawa Pulang)</option>
+            `;
+            typeSelect.value = orderType;
+
+            if (tableInput && tableInput.parentNode) {
+                tableInput.parentNode.insertBefore(typeSelect, tableInput);
+            } else {
+                orderForm.prepend(typeSelect);
+            }
+        }
+
+        function syncTableLabel() {
+            if (!tableInput) return;
+            tableInput.value = (typeSelect.value === 'takeaway')
+                ? `Takeaway (QR ${scannedTable})`
+                : scannedTable;
+            if (tableInput.tagName === 'INPUT') {
+                tableInput.readOnly = true;
+            }
+        }
+
+        syncTableLabel();
+        typeSelect.addEventListener('change', syncTableLabel);
+
+        let qrisConfirmed = false;
+        orderForm.addEventListener('submit', function (e) {
+            if (qrisConfirmed) return;
+            e.preventDefault();
+
+            const cart = JSON.parse(localStorage.getItem('lapancuan_cart') || '[]');
+            if (!cart.length) {
+                alert('Keranjang masih kosong!');
+                return;
+            }
+
+            let total = 0;
+            cart.forEach(item => total += (Number(item.price) * Number(item.qty)));
+
+            const mejaVal = tableInput ? tableInput.value : scannedTable;
+            document.getElementById('qrisTableLabel').textContent = mejaVal;
+            document.getElementById('qrisTotalAmount').textContent = 'Rp ' + total.toLocaleString('id-ID');
+
+            const qrisPayload = `00020101021226580016ID.CO.QRIS.WWW0215ID102026888999520458125303360540${total}5802ID5910LAPAN CUAN6006MALANG`;
+            document.getElementById('qrisCodeImg').src = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(qrisPayload)}`;
+
+            document.getElementById('qrisPaymentModal').style.display = 'flex';
+        });
+
+        document.getElementById('confirmQrisBtn').addEventListener('click', function () {
+            let cartInput = orderForm.querySelector('input[name="cart_json"]');
+            if (!cartInput) {
+                cartInput = document.createElement('input');
+                cartInput.type = 'hidden';
+                cartInput.name = 'cart_json';
+                orderForm.appendChild(cartInput);
+            }
+            cartInput.value = localStorage.getItem('lapancuan_cart') || '[]';
+
+            qrisConfirmed = true;
+            orderForm.submit();
+        });
+    }
+});
+
+function closeQrisModal() {
+    document.getElementById('qrisPaymentModal').style.display = 'none';
+}
+</script>
 
 <?php include 'includes/footer.php'; ?>

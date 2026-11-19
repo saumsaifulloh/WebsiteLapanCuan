@@ -1,0 +1,58 @@
+[
+    {
+        "code": "LC-261119-934",
+        "name": "aji",
+        "phone": "081288769457",
+        "table": "Meja 3",
+        "notes": "less ice",
+        "payment_method": "QRIS",
+        "payment_status": "LUNAS",
+        "status": "ready",
+        "created_at": "16:50",
+        "total": 65000,
+        "items": [
+            {
+                "id": 101,
+                "name": "Americano",
+                "price": 22000,
+                "qty": 1
+            },
+            {
+                "id": 102,
+                "name": "Caffe Latte",
+                "price": 18000,
+                "qty": 1
+            },
+            {
+                "id": 105,
+                "name": "Kopi Cuan",
+                "price": 25000,
+                "qty": 1
+            }
+        ]
+    },
+    {
+        "code": "LC-261119-101",
+        "name": "Raka Pratama",
+        "phone": "08123456789",
+        "table": "Meja 2",
+        "notes": "Less sugar",
+        "payment_method": "QRIS",
+        "payment_status": "LUNAS",
+        "status": "completed",
+        "created_at": "16:17",
+        "total": 43000,
+        "items": [
+            {
+                "name": "Kopi Cuan",
+                "qty": 1,
+                "price": 25000
+            },
+            {
+                "name": "Hokkaido Bun Coffee",
+                "qty": 1,
+                "price": 18000
+            }
+        ]
+    }
+]
